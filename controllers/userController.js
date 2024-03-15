@@ -28,7 +28,9 @@ export const login = async (req, res, next) => {
       { expiresIn: "2h" }
     );
 
-    res.json({ token });
+    const newuser = {...user, token}
+
+    res.json({ name : user.name , email: user.email, phoneno: user.phoneNumber, address : user.address, isAdmin:user.isAdmin ,token: token});
   } catch (error) {
     next(error);
   }
@@ -69,7 +71,6 @@ export const logout = (req, res) => {
 
 export const profile = async (req, res, next) => {
   try {
-    console.log(req.user);
     const user = await User.findById(req.user.id);
 
     if (!user) {

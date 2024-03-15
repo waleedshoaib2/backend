@@ -2,24 +2,53 @@ import express from "express";
 import connectDb from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import cors from "cors";
-import passport from "passport"; // Import passport
-import "./config/passport.js"; // Assuming passport.js now uses ES modules
+import passport from "passport";
+import "./config/passport.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
-const server = express();
+import cartRoutes from "./routes/cartRoutes.js"
+import reviewRoutes from "./routes/reviewRoutes.js"
+import { Server } from "socket.io";
 
-server.use(express.json());
+const app = express(); 
+app.use(express.json());
 
 connectDb();
-server.use(passport.initialize()); // Initialize Passport
-server.use(cors());
-server.use("/product", productRoutes);
-server.use("/user", userRoutes);
-server.use("/chat", chatRoutes);
+app.use(passport.initialize());
+app.use(cors());
 
-server.use("/categories", categoryRoutes);
+app.use("/product", productRoutes);
+app.use("/user", userRoutes);
+app.use("/chat", chatRoutes);
+app.use("/categories", categoryRoutes);
+app.use('/reviews', reviewRoutes);
+app.use("/cart", cartRoutes); 
 
-server.listen(4000, () => {
+const httpServer = app.listen(4000, () => {
   console.log("Server is running at http://localhost:4000");
+});
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000", 
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("joinChat", (chatId) => {
+    socket.join(chatId);
+    console.log(`User ${socket.id} joined chat ${chatId}`); // Add logging
+  });
+
+  socket.on("sendMessage", (chatId, messageData) => {
+    io.to(chatId).emit("newMessage", messageData);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
 });

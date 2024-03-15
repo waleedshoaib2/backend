@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
-const { Schema } = mongoose; // Destructuring for cleaner usage
-
+const { Schema } = mongoose;
 const UserSchema = new Schema({
   name: {
     type: String,
